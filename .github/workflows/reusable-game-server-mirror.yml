@@ -35,8 +35,8 @@ on:
         default: deploy
     secrets:
       GITLAB_TOKEN:
-        description: PAT or project token with push to mirror repo
-        required: true
+        description: PAT or project token with push to mirror repo (not required on PRs)
+        required: false
 
 permissions:
   contents: read
