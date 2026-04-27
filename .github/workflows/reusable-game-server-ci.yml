@@ -1,0 +1,54 @@
+---
+# Reusable: one Verify job for game-server-style repos (Docker + Kustomize + scripts).
+name: Reusable game server CI
+
+on:
+  workflow_call:
+    inputs:
+      hadolint_dockerfile:
+        description: Primary Dockerfile path
+        type: string
+        required: false
+        default: Dockerfile
+      hadolint_dockerfile_secondary:
+        description: Second Dockerfile path; empty skips
+        type: string
+        required: false
+        default: ""
+      hadolint_failure_threshold:
+        type: string
+        required: false
+        default: error
+      markdownlint_config:
+        type: string
+        required: false
+        default: .markdownlint.jsonc
+      yamllint_config:
+        type: string
+        required: false
+        default: .yamllint.yml
+      kustomize_path:
+        type: string
+        required: false
+        default: deploy
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify (shell, Docker, Markdown, YAML, Kustomize)
+        uses: DataKnifeAI/github-workflows/.github/actions/verify-game-server@main
+        with:
+          hadolint_failure_threshold: ${{ inputs.hadolint_failure_threshold }}
+          hadolint_dockerfile: ${{ inputs.hadolint_dockerfile }}
+          hadolint_dockerfile_secondary: ${{ inputs.hadolint_dockerfile_secondary }}
+          markdownlint_config: ${{ inputs.markdownlint_config }}
+          yamllint_config: ${{ inputs.yamllint_config }}
+          kustomize_path: ${{ inputs.kustomize_path }}

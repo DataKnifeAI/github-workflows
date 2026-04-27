@@ -1,0 +1,87 @@
+---
+# Reusable: verify gate + push to GitLab mirror on main (caller must set GITLAB_TOKEN).
+name: Reusable game server mirror to GitLab
+
+on:
+  workflow_call:
+    inputs:
+      gitlab_mirror_path:
+        description: GitLab path without .git (e.g. dk-raas/dkai/game-servers/foo)
+        type: string
+        required: true
+      hadolint_dockerfile:
+        type: string
+        required: false
+        default: Dockerfile
+      hadolint_dockerfile_secondary:
+        type: string
+        required: false
+        default: ""
+      hadolint_failure_threshold:
+        type: string
+        required: false
+        default: error
+      markdownlint_config:
+        type: string
+        required: false
+        default: .markdownlint.jsonc
+      yamllint_config:
+        type: string
+        required: false
+        default: .yamllint.yml
+      kustomize_path:
+        type: string
+        required: false
+        default: deploy
+    secrets:
+      GITLAB_TOKEN:
+        description: PAT or project token with push to mirror repo
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint (gate for mirror)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify (shell, Docker, Markdown, YAML, Kustomize)
+        uses: DataKnifeAI/github-workflows/.github/actions/verify-game-server@main
+        with:
+          hadolint_failure_threshold: ${{ inputs.hadolint_failure_threshold }}
+          hadolint_dockerfile: ${{ inputs.hadolint_dockerfile }}
+          hadolint_dockerfile_secondary: ${{ inputs.hadolint_dockerfile_secondary }}
+          markdownlint_config: ${{ inputs.markdownlint_config }}
+          yamllint_config: ${{ inputs.yamllint_config }}
+          kustomize_path: ${{ inputs.kustomize_path }}
+
+  push-to-gitlab:
+    name: Push to GitLab
+    runs-on: ubuntu-latest
+    needs:
+      - verify
+    if: >-
+      always() && needs.verify.result == 'success' &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_MIRROR_PATH: ${{ inputs.gitlab_mirror_path }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote remove gitlab 2>/dev/null || true
+          git remote add gitlab "https://gitlab.com/${GITLAB_MIRROR_PATH}.git"
+          git config credential.helper '!f() { echo "username=oauth2"; echo "password=${GITLAB_TOKEN}"; }; f'
+          git fetch gitlab main 2>/dev/null || true
+          git push gitlab HEAD:main --force
