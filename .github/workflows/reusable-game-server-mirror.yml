@@ -74,14 +74,7 @@ jobs:
           fetch-depth: 0
 
       - name: Push to GitLab
-        env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_MIRROR_PATH: ${{ inputs.gitlab_mirror_path }}
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git remote remove gitlab 2>/dev/null || true
-          git remote add gitlab "https://gitlab.com/${GITLAB_MIRROR_PATH}.git"
-          git config credential.helper '!f() { echo "username=oauth2"; echo "password=${GITLAB_TOKEN}"; }; f'
-          git fetch gitlab main 2>/dev/null || true
-          git push gitlab HEAD:main --force
+        uses: DataKnifeAI/github-workflows/.github/actions/push-gitlab-mirror@main
+        with:
+          gitlab_mirror_path: ${{ inputs.gitlab_mirror_path }}
+          gitlab_token: ${{ secrets.GITLAB_TOKEN }}

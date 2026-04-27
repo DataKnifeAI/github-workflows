@@ -18,8 +18,10 @@ jobs:
 | Path | Purpose |
 |------|---------|
 | `.github/actions/verify-game-server` | Shellcheck, Hadolint (configurable), Markdownlint, Yamllint, `kubectl kustomize` |
+| `.github/actions/push-gitlab-mirror` | Shared **git push** to `gitlab.com/{path}.git` with oauth2 token |
 | `reusable-game-server-ci.yml` | Single **Verify** job for PRs and `main` |
 | `reusable-game-server-mirror.yml` | Verify gate + optional push to GitLab mirror on `main` |
+| `reusable-gitlab-mirror-push.yml` | Reusable **push-only** mirror (call after your CI jobs succeed) |
 | `reusable-game-server-security.yml` | Build image + Trivy SARIF upload (GitHub Security tab) |
 
 For **mirror** workflows on pull requests, `GITLAB_TOKEN` may be absent; the reusable workflow declares that secret as **optional** so the verify gate still runs. The push job only runs on `main` and will fail there if the token is missing.

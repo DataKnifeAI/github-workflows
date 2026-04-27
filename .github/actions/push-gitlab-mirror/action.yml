@@ -1,0 +1,39 @@
+---
+name: Push GitLab mirror
+description: >-
+  Force-push the current HEAD to a GitLab project using oauth2 token authentication.
+  Expects a full git checkout (fetch-depth 0) in the job before this action runs.
+inputs:
+  gitlab_mirror_path:
+    description: GitLab path without .git (e.g. dk-raas/dkai/devops/foo)
+    required: true
+  remote_branch:
+    description: Branch name on the GitLab remote to push to
+    required: false
+    default: main
+  gitlab_base_url:
+    description: GitLab base URL without trailing slash
+    required: false
+    default: https://gitlab.com
+  gitlab_token:
+    description: PAT or project token with push access (pass secrets.GITLAB_TOKEN)
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Push to GitLab
+      shell: bash
+      env:
+        GITLAB_TOKEN: ${{ inputs.gitlab_token }}
+        GITLAB_MIRROR_PATH: ${{ inputs.gitlab_mirror_path }}
+        GITLAB_BASE_URL: ${{ inputs.gitlab_base_url }}
+        REMOTE_BRANCH: ${{ inputs.remote_branch }}
+      run: |
+        set -euo pipefail
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git remote remove gitlab 2>/dev/null || true
+        git remote add gitlab "${GITLAB_BASE_URL}/${GITLAB_MIRROR_PATH}.git"
+        git config credential.helper '!f() { echo "username=oauth2"; echo "password=${GITLAB_TOKEN}"; }; f'
+        git fetch gitlab "${REMOTE_BRANCH}" 2>/dev/null || true
+        git push gitlab "HEAD:${REMOTE_BRANCH}" --force
