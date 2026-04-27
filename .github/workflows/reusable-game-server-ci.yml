@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify (shell, Docker, Markdown, YAML, Kustomize)
-        uses: DataKnifeAI/github-workflows/.github/actions/verify-game-server@main
+        uses: DataKnifeAI/github-workflows/.github/actions/verify-game-server@v1
         with:
           hadolint_failure_threshold: ${{ inputs.hadolint_failure_threshold }}
           hadolint_dockerfile: ${{ inputs.hadolint_dockerfile }}
