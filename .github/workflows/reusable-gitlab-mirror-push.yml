@@ -1,0 +1,49 @@
+---
+# Reusable: mirror the caller repo to GitLab (push to main only, or main/master when invoked from those branches).
+name: Reusable push to GitLab mirror
+
+on:
+  workflow_call:
+    inputs:
+      gitlab_mirror_path:
+        description: GitLab path without .git (e.g. dk-raas/dkai/devops/foo)
+        type: string
+        required: true
+      remote_branch:
+        description: Branch on GitLab to force-push to
+        type: string
+        required: false
+        default: main
+      gitlab_base_url:
+        description: GitLab base URL without trailing slash
+        type: string
+        required: false
+        default: https://gitlab.com
+    secrets:
+      GITLAB_TOKEN:
+        description: PAT or project token with push to mirror repo
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  push-to-gitlab:
+    name: Push to GitLab
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        uses: DataKnifeAI/github-workflows/.github/actions/push-gitlab-mirror@main
+        with:
+          gitlab_mirror_path: ${{ inputs.gitlab_mirror_path }}
+          remote_branch: ${{ inputs.remote_branch }}
+          gitlab_base_url: ${{ inputs.gitlab_base_url }}
+          gitlab_token: ${{ secrets.GITLAB_TOKEN }}
