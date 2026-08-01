@@ -1,5 +1,8 @@
 # DataKnife GitHub workflows
 
+![Reusable GitHub Actions workflows](docs/assets/github-workflows-hero.jpg)
+
+
 Reusable **workflows** (`workflow_call`) and a **composite action** shared across DataKnife repositories (game server containers, GitLab mirrors, security scans).
 
 ## Consumers
